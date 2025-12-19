@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
+from gestures import classify_gesture
 from hand_tracker import Hand
 from hud import *
 
@@ -36,31 +37,37 @@ while True:
             palm = np.array(hand[9])
             draw_glow_circle(frame, tuple(palm), 12, (0, 255, 255))
 
-            dists = [np.linalg.norm(tip - palm) for tip in tips]
-            mean_dists = np.mean(dists)
+            gesture, value = classify_gesture(hand)
 
-            pinch_dist = np.linalg.norm(np.array(hand[4]) - np.array(hand[8]))
-            pinch_val = int(100 - min(pinch_dist, 100))
-
-            if mean_dists > 70:
-                draw_glow_circle(frame, tuple(palm), 120, CYAN, 3, glow=30)
-                draw_glow_circle(frame, tuple(palm), 90, CYAN, 2, glow=20)
-                draw_glow_circle(frame, tuple(palm), 60, ORANGE, 2, glow=10)
+            if gesture == "OPEN":
+                draw_glow_circle(frame, palm, 120, CYAN, 3, glow=30)
+                draw_glow_circle(frame, palm, 90, CYAN, 2, glow=20)
+                draw_glow_circle(frame, palm, 60, ORANGE, 2, glow=10)
                 draw_radial_ticks(frame, palm, 120, CYAN)
                 hud_details(frame, palm, 155, CYAN)
                 core_hud(frame, tuple(palm), 40)
                 draw_hud_arc(frame, palm)
+                cv2.putText(frame, "OPEN",(palm[0]-30, palm[1]-70),cv2.FONT_HERSHEY_SIMPLEX, 1, CYAN, 3)
 
-            elif pinch_val < 60:
+            elif gesture == "PINCH":
                 draw_glow_circle(frame, palm, 60, ORANGE, 3, glow=20)
-                cv2.putText(frame, f'Pinch: {pinch_val}',
-                            (palm[0]-40, palm[1]-70),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, ORANGE, 2)
-            else:
+                cv2.putText(frame, f"PINCH {value}%",(palm[0]-60, palm[1]-70),cv2.FONT_HERSHEY_SIMPLEX, 1, ORANGE, 2)
+
+            elif gesture == "MIDDLE_FINGER":
+                draw_glow_circle(frame, palm, 80, RED, 4, glow=30)
+                cv2.putText(frame, "INAPPROPRIATE GESTURE",(palm[0]-140, palm[1]-100),cv2.FONT_HERSHEY_SIMPLEX, 0.9, RED, 3)
+
+            elif gesture == "FIST":
                 draw_glow_circle(frame, palm, 60, CYAN, 3, glow=20)
-                cv2.putText(frame, 'FIST',
-                            (palm[0]-30, palm[1]-70),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, ORANGE, 3)
+                cv2.putText(frame, "FIST",(palm[0]-30, palm[1]-70),cv2.FONT_HERSHEY_SIMPLEX, 1, ORANGE, 3)
+
+            elif gesture == "THUMBS_UP":
+                draw_glow_circle(frame, palm, 70, (0, 255, 0), 3, glow=25)
+                cv2.putText(frame, "THUMBS UP",(palm[0]-70, palm[1]-90),cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+
+            elif gesture == "THUMBS_DOWN":
+                draw_glow_circle(frame, palm, 70, (0, 0, 255), 3, glow=25)
+                cv2.putText(frame, "THUMBS DOWN",(palm[0]-90, palm[1]-90),cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 3)
 
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
