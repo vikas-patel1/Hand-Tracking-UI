@@ -51,7 +51,7 @@ class Hand:
 
 hand_detector = Hand()
 
-
+# draw outer glowing circles 
 def draw_glow_circle(frame, center, radius, color, thickness=2, glow=15):
     for g in range(glow, 0, -3):
         alpha = 0.08 + 0.12 * (g / glow)
@@ -61,6 +61,7 @@ def draw_glow_circle(frame, center, radius, color, thickness=2, glow=15):
 
     cv2.circle(frame, center, radius, color, thickness)
 
+# draw inner radial ticks 
 def draw_radial_ticks(img,center,radius,color,num_ticks=24,length=22):
     for i in range(num_ticks):
         angle=np.deg2rad(i*(360/num_ticks))
@@ -71,6 +72,25 @@ def draw_radial_ticks(img,center,radius,color,num_ticks=24,length=22):
 
         cv2.line(img,(x1,y1),(x2,y2),color,3)
 
+#hud detailing
+def hud_details(img,center,radius,color):
+    #drawing outer ticks 
+    for i in range(8):
+        angle=np.deg2rad(210+i*10)
+        x1=int(center[0]+(radius-15)*np.cos(angle))
+        y1=int(center[1]+(radius-15)*np.sin(angle))
+        x2=int(center[0]+(radius+20)*np.cos(angle))
+        y2=int(center[1]+(radius+20)*np.sin(angle))
+        
+        cv2.line(img,(x1,y1),(x2,y2),color,thickness=4)
+    
+    # drawing rectangle box
+    for i in range(4):
+        angle=np.deg2rad(270+i*15)
+        x1=int(center[0]+(radius-35)*np.cos(angle))
+        y1=int(center[1]+(radius-35)*np.sin(angle))
+
+        cv2.rectangle(img,(x1+10,y1+10),(x1-10,y1-10),color,thickness=3)
 while True:
     ret, frame = cam.read()
     if not ret:
@@ -81,7 +101,7 @@ while True:
 
     if handData:
         for hand in handData:
-            tips = []  # MUST be outside fingertip loop
+            tips = [] 
 
             for idx in [4, 8, 12, 16, 20]:
                 draw_glow_circle(frame, hand[idx], 10, (255, 0, 255))
@@ -90,7 +110,7 @@ while True:
             palm = np.array(hand[9])
             draw_glow_circle(frame, tuple(palm), 12, (0, 255, 255))
 
-            # Distance calculation (CORRECT)
+            # Distance calculation
             dists = [np.linalg.norm(tip - palm) for tip in tips]
             mean_dists = np.mean(dists)
 
@@ -99,7 +119,8 @@ while True:
                 draw_glow_circle(frame, tuple(palm), 90, CYAN, 2, glow=20)
                 draw_glow_circle(frame, tuple(palm), 60, ORANGE, 2, glow=10)
                 draw_radial_ticks(frame,palm,120,CYAN,num_ticks=24,length=22)
-                
+                hud_details(frame,palm,155,CYAN)
+
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
             mp_drawing.draw_landmarks(
