@@ -91,6 +91,13 @@ def hud_details(img,center,radius,color):
         y1=int(center[1]+(radius-35)*np.sin(angle))
 
         cv2.rectangle(img,(x1+10,y1+10),(x1-10,y1-10),color,thickness=3)
+
+#drawing hud arcs (ecllipse)
+def draw_hud_arc(img,center):
+    cv2.ellipse(img,tuple(center),(110,110),0,-30,210,RED,2)
+    cv2.ellipse(img,tuple(center),(100,100),0,-30,210,ORANGE,3)
+    cv2.ellipse(img,tuple(center),(80,80),0,0,360,CYAN,4)
+
 while True:
     ret, frame = cam.read()
     if not ret:
@@ -120,7 +127,7 @@ while True:
                 draw_glow_circle(frame, tuple(palm), 60, ORANGE, 2, glow=10)
                 draw_radial_ticks(frame,palm,120,CYAN,num_ticks=24,length=22)
                 hud_details(frame,palm,155,CYAN)
-
+                draw_hud_arc(frame,palm)
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
             mp_drawing.draw_landmarks(
@@ -132,6 +139,6 @@ while True:
     cv2.imshow("mywindow", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
-
+    
 cam.release()
 cv2.destroyAllWindows()
