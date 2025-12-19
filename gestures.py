@@ -21,7 +21,8 @@ def hand_scale(hand):
 
 
 def is_finger_extended(hand, tip, mcp):
-    return hand[tip][1] < hand[mcp][1]
+    if hand[tip][1] < hand[mcp][1]:
+        return True
 
 
 def are_other_fingers_folded(hand):
@@ -29,7 +30,7 @@ def are_other_fingers_folded(hand):
     Index, ring, pinky folded
     """
     for tip, mcp in zip(FINGER_TIPS, FINGER_MCP):
-        if hand[tip][1] < hand[mcp][1]:
+        if hand[tip][1] < hand[mcp][1]:  #changes here
             return False
     return True
 
@@ -44,7 +45,7 @@ def detect_pinch(hand):
 
     pinch_strength = int(np.clip((1 - pinch_ratio) * 100, 0, 100))
 
-    return pinch_ratio < 0.35, pinch_strength
+    return pinch_ratio < 0.25, pinch_strength
 
 
 # ---------- FIST ----------
@@ -72,28 +73,28 @@ def detect_thumb_gesture(hand):
     thumb_extended = thumb_tip[1] < thumb_ip[1]
     others_folded = are_other_fingers_folded(hand)
 
-    if not (thumb_extended and others_folded):
-        return None
+    # if not (thumb_extended and others_folded):
+    #     return None
 
     if thumb_tip[1] < wrist[1] - 20:
         return "THUMBS_UP"
 
-    if thumb_tip[1] > wrist[1] + 20:
+    if thumb_tip[1] > wrist[1]:
         return "THUMBS_DOWN"
 
     return None
 
 
-# ---------- MIDDLE FINGER (INAPPROPRIATE) ----------
+# ---------- MIDDLE FINGER (INAPPROPRIATE) ---------- (changes here)
 def detect_middle_finger(hand):
     """
     Middle finger extended, others folded
     """
     middle_extended = is_finger_extended(hand, MIDDLE_TIP, MIDDLE_MCP)
 
-    index_folded = hand[8][1] > hand[5][1]
-    ring_folded = hand[16][1] > hand[13][1]
-    pinky_folded = hand[20][1] > hand[17][1]
+    index_folded = hand[8][1] > hand[6][1]
+    ring_folded = hand[16][1] > hand[14][1]
+    pinky_folded = hand[20][1] > hand[18][1]
 
     if middle_extended and index_folded and ring_folded and pinky_folded:
         return True
@@ -104,6 +105,9 @@ def detect_middle_finger(hand):
 # ---------- CLASSIFIER ----------
 def classify_gesture(hand):
     pinch, strength = detect_pinch(hand)
+    if detect_fist(hand):
+        return "FIST", None
+    
     if pinch:
         return "PINCH", strength
 
@@ -114,8 +118,6 @@ def classify_gesture(hand):
     if detect_middle_finger(hand):
         return "MIDDLE_FINGER", None
 
-    if detect_fist(hand):
-        return "FIST", None
 
     if detect_open(hand):
         return "OPEN", None
